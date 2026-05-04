@@ -1,12 +1,14 @@
 # EnvScope
 
-EnvScope 是一个用于 Android 运行环境自检的 APK，重点探测 Frida、Xposed、LSPosed、EdXposed、Substrate、Riru、Zygisk/Magisk 等动态插桩、Hook 或模块化注入痕迹。
+Language: English | [Chinese](README.zh-CN.md)
 
-项目同时实现 Kotlin 层与 Native C++ 层检测。Kotlin 层负责包名、类加载、调用栈、环境变量、系统属性、端口、进程、挂载表等检查；Native 层负责已加载 so、导出符号、`/proc`、线程名、socket 和 `TracerPid` 的交叉检查。
+EnvScope is an Android runtime inspection app for detecting Frida, Xposed, LSPosed, EdXposed, Substrate, Riru, Zygisk/Magisk, and related dynamic instrumentation or hook traces.
 
-## 构建
+The project combines Kotlin-side and native C++ checks. The Kotlin layer inspects packages, class loading, thread stacks, environment variables, system properties, ports, processes, and mount tables. The native layer cross-checks loaded shared libraries, exported symbols, `/proc`, thread names, sockets, and `TracerPid`.
 
-本项目使用 Android Gradle Plugin 8.7.1、Kotlin 1.9.24、compileSdk 35。
+## Build
+
+This project uses Android Gradle Plugin 8.7.1, Kotlin 1.9.24, and compileSdk 35.
 
 ```powershell
 $env:JAVA_HOME='C:\Users\11980\AppData\Local\Programs\Android Studio\jbr'
@@ -14,48 +16,48 @@ $env:PATH="$env:JAVA_HOME\bin;$env:PATH"
 .\gradlew.bat assembleDebug
 ```
 
-构建产物：
+Debug APK output:
 
 ```text
 app/build/outputs/apk/debug/app-debug.apk
 ```
 
-## 权限说明
+## Permissions
 
-- `android.permission.INTERNET`：用于主动连接 `127.0.0.1` / `::1` 上的 Frida 常见端口。
-- `android.permission.QUERY_ALL_PACKAGES`：用于枚举安装包并检查 Hook 管理器、Frida Gadget、Magisk/LSPosed 等包名或路径。该权限适合安全自检、企业内部分发或研究用途；如上架应用商店，需要按平台政策说明用途。
-- `<queries>`：显式声明常见 Xposed、LSPosed、EdXposed、Substrate、Magisk、Frida 相关包名，提升 Android 11+ 包可见性。
+- `android.permission.INTERNET`: used to actively probe common Frida ports on `127.0.0.1` and `::1`.
+- `android.permission.QUERY_ALL_PACKAGES`: used to enumerate installed packages and inspect package names or paths related to hook managers, Frida Gadget, Magisk, and LSPosed. This permission is suitable for security self-checking, internal distribution, or research use. If published to an app store, its usage must follow the platform policy.
+- `<queries>`: declares common Xposed, LSPosed, EdXposed, Substrate, Magisk, and Frida package names to improve package visibility on Android 11 and later.
 
-## 检测点
+## Detection Points
 
-### 1. 已安装 Hook/注入管理器包名
+### 1. Known Hook or Injection Manager Packages
 
-通过 `PackageManager.getPackageInfo()` 查询常见包名：
+Uses `PackageManager.getPackageInfo()` to query common package names:
 
-- Xposed Installer：`de.robv.android.xposed.installer`
-- LSPosed：`org.lsposed.manager`
-- EdXposed：`org.meowcat.edxposed.manager`、`com.solohsu.android.edxp.manager`
-- Riru EdXposed：`com.elderdrivers.riru.edxp.manager`
-- LSPatch：`org.lsposed.lspatch`
-- TaiChi / VirtualXposed：`me.weishu.exp`、`me.weishu.exposed`、`io.va.exposed`
-- Cydia Substrate：`com.saurik.substrate`
-- Magisk / Kitsune Mask：`com.topjohnwu.magisk`、`io.github.huskydg.magisk`
-- Frida 相关包名：`re.frida.server`、`com.frida.server`、`re.frida.gadget`、`com.frida.gadget`
+- Xposed Installer: `de.robv.android.xposed.installer`
+- LSPosed: `org.lsposed.manager`
+- EdXposed: `org.meowcat.edxposed.manager`, `com.solohsu.android.edxp.manager`
+- Riru EdXposed: `com.elderdrivers.riru.edxp.manager`
+- LSPatch: `org.lsposed.lspatch`
+- TaiChi / VirtualXposed: `me.weishu.exp`, `me.weishu.exposed`, `io.va.exposed`
+- Cydia Substrate: `com.saurik.substrate`
+- Magisk / Kitsune Mask: `com.topjohnwu.magisk`, `io.github.huskydg.magisk`
+- Frida-related packages: `re.frida.server`, `com.frida.server`, `re.frida.gadget`, `com.frida.gadget`
 
-### 2. 安装包清单关键词扫描
+### 2. Installed Package Inventory Keyword Scan
 
-枚举可见安装包的包名、应用标签和 APK 路径，匹配：
+Enumerates visible installed packages and scans package names, application labels, and APK paths for:
 
 ```text
 frida, xposed, lsposed, lspd, edxposed, riru, zygisk,
 substrate, taichi, virtualxposed, lspatch, magisk
 ```
 
-这可以发现不在精确包名列表内的改名版本、分支版本或模块管理器。
+This can reveal renamed builds, forked versions, or module managers that are not covered by the exact package-name list.
 
-### 3. 运行时可加载 Hook 框架类
+### 3. Runtime-Loadable Hook Framework Classes
 
-通过当前 `ClassLoader`、线程上下文 `ClassLoader` 和系统 `ClassLoader` 尝试加载典型类：
+Attempts to load typical hook and instrumentation classes through the current `ClassLoader`, the thread context `ClassLoader`, and the system `ClassLoader`:
 
 - `de.robv.android.xposed.XposedBridge`
 - `de.robv.android.xposed.XposedHelpers`
@@ -64,13 +66,13 @@ substrate, taichi, virtualxposed, lspatch, magisk
 - `org.lsposed.lspd.impl.LSPosedBridge`
 - `org.lsposed.lspd.impl.LSPosedContext`
 - `com.saurik.substrate.MS`
-- `re.frida.Gadget`、`com.frida.Gadget`、`frida.Agent`
+- `re.frida.Gadget`, `com.frida.Gadget`, `frida.Agent`
 
-如果这些类可被加载，通常表示进程内已经存在 Hook 框架或 Gadget 注入环境。
+If these classes can be loaded, the process likely contains a hook framework or a Gadget-style injection environment.
 
-### 4. 线程调用栈 Hook 痕迹
+### 4. Hook Traces in Thread Stacks
 
-扫描当前进程所有 Java 线程栈，匹配：
+Scans all Java thread stack traces in the current process for:
 
 ```text
 xposedbridge, xposedhelpers, handlehookedmethod,
@@ -78,11 +80,11 @@ invokeoriginalmethodnative, lsposed, lspd, edxposed,
 substrate, frida
 ```
 
-该检测点用于发现 Xposed/LSPosed hook 调用链、原方法调用桥或 Frida 相关栈帧。
+This helps identify Xposed/LSPosed hook call chains, original-method bridge calls, or Frida-related stack frames.
 
-### 5. 线程名关键词
+### 5. Thread Name Keywords
 
-检查 Java 线程名和 `/proc/self/task/*/comm`，覆盖 Frida 常见线程名：
+Checks Java thread names and `/proc/self/task/*/comm`, including common Frida thread names:
 
 - `gum-js-loop`
 - `gmain`
@@ -90,11 +92,11 @@ substrate, frida
 - `pool-frida`
 - `linjector`
 
-同时匹配 `xposed`、`lsposed`、`lspd`、`riru`、`zygisk` 等关键词。
+It also matches keywords such as `xposed`, `lsposed`, `lspd`, `riru`, and `zygisk`.
 
-### 6. `/proc/self/maps` 注入库或 memfd
+### 6. Injected Libraries or memfd Entries in `/proc/self/maps`
 
-读取当前进程 maps，查找：
+Reads the current process maps and searches for:
 
 - `libfrida-gadget.so`
 - `frida-agent`
@@ -110,35 +112,35 @@ substrate, frida
 - `epic`
 - `whale`
 
-该检测点可以发现已加载 native 注入库、内存文件映射、inline hook 框架或 Zygisk/Riru 相关 so。
+This can reveal loaded native injection libraries, memory-file mappings, inline hook frameworks, or Zygisk/Riru-related shared objects.
 
-### 7. 异常可写可执行内存段
+### 7. Suspicious Writable and Executable Memory
 
-扫描 maps 中非系统、非 APEX、非常见 ART JIT 的 `rwx` 映射。该项不是 Frida/Xposed 专属证据，但可作为动态插桩、shellcode、inline hook 的辅助信号。
+Scans maps for non-system, non-APEX, non-standard ART JIT `rwx` mappings. This is not Frida/Xposed-specific evidence, but it is useful as an auxiliary signal for dynamic instrumentation, shellcode, or inline hooks.
 
-### 8. ClassLoader / DexPath 注入路径
+### 8. ClassLoader / DexPath Injection Paths
 
-反射检查 `BaseDexClassLoader` 内部的：
+Reflectively inspects `BaseDexClassLoader` internals:
 
 - `dexElements`
 - `nativeLibraryDirectories`
 - `nativeLibraryPathElements`
 
-如果 dex、apk、jar、so 路径中出现 Frida、Xposed、LSPosed、LSPatch、Substrate、Riru、Zygisk 等关键词，则标记命中。
+If dex, apk, jar, or shared-library paths contain Frida, Xposed, LSPosed, LSPatch, Substrate, Riru, or Zygisk keywords, the check is marked as a hit.
 
-### 9. 环境变量关键词
+### 9. Environment Variable Keywords
 
-扫描 `System.getenv()`，重点覆盖：
+Scans `System.getenv()`, with special attention to:
 
 - `LD_PRELOAD`
 - `CLASSPATH`
-- 注入框架添加的自定义环境变量
+- Custom environment variables added by injection frameworks
 
-如果环境变量中出现 `XposedBridge.jar`、`frida`、`substrate` 等关键词，则标记命中。
+The check is marked as a hit if environment variables contain keywords such as `XposedBridge.jar`, `frida`, or `substrate`.
 
-### 10. 常见框架与服务文件路径
+### 10. Common Framework and Service File Paths
 
-检查常见落点：
+Checks common file locations:
 
 - `/system/framework/XposedBridge.jar`
 - `/system/bin/app_process_xposed`
@@ -152,11 +154,11 @@ substrate, frida
 - `/data/local/tmp/libfrida-gadget.so`
 - `/system/bin/frida-server`
 
-Android 沙箱可能限制部分路径访问，因此该项适合作为命中证据，不适合作为唯一的未命中依据。
+Android sandboxing may restrict access to some paths. This check is useful as positive evidence, but a miss should not be treated as proof that the environment is clean.
 
-### 11. 系统属性关键词
+### 11. System Property Keywords
 
-通过反射 `android.os.SystemProperties.get()` 和执行 `getprop` 扫描属性：
+Uses reflection on `android.os.SystemProperties.get()` and parses `getprop` output to scan properties such as:
 
 - `persist.sys.xposed`
 - `persist.sys.taichi`
@@ -167,80 +169,80 @@ Android 沙箱可能限制部分路径访问，因此该项适合作为命中证
 - `ro.lsposed.version`
 - `ro.edxposed.version`
 
-同时对完整 `getprop` 输出做关键词匹配。
+The full `getprop` output is also keyword-matched.
 
-### 12. Frida 本地端口连接探测
+### 12. Frida Local Port Probing
 
-主动连接：
+Actively connects to:
 
 - `127.0.0.1`
 - `::1`
 
-端口范围：
+Port range:
 
-- `27040` 到 `27050`
+- `27040` through `27050`
 - `23946`
 
-其中 `27042`、`27043` 是 Frida server 的常见默认端口。端口开放会被标记为高风险。
+Ports `27042` and `27043` are common Frida server defaults. Open ports in this range are marked as high risk.
 
-### 13. `/proc/net/tcp` 端口表
+### 13. `/proc/net/tcp` Port Table
 
-读取 `/proc/net/tcp` 和 `/proc/net/tcp6`，查找 Frida 常见端口的十六进制表示，覆盖主动连接失败但端口表可见的情况。
+Reads `/proc/net/tcp` and `/proc/net/tcp6`, then searches for the hexadecimal representation of common Frida ports. This covers cases where active connection probing fails but the port table is still visible.
 
-### 14. Unix Domain Socket 关键词
+### 14. Unix Domain Socket Keywords
 
-扫描 `/proc/net/unix`，匹配 Frida、gum、LSPosed、LSP、Magisk、Zygisk、Riru 等 socket 名称。
+Scans `/proc/net/unix` for socket names related to Frida, gum, LSPosed, LSP, Magisk, Zygisk, and Riru.
 
-### 15. 进程列表关键词
+### 15. Process List Keywords
 
-读取：
+Reads:
 
 - `/proc/[pid]/cmdline`
 - `/proc/[pid]/comm`
 - `ps -A`
 - `ps`
 
-查找 `frida-server`、`lspd`、`zygisk`、`riru`、`xposed` 等进程名或命令行。Android 8+ 对跨进程可见性有限，因此该项同样是命中强、未命中弱。
+Searches for process names or command lines such as `frida-server`, `lspd`, `zygisk`, `riru`, and `xposed`. Android 8 and later restrict cross-process visibility, so this check is strong when it hits and weak when it misses.
 
-### 16. `TracerPid` 调试附加状态
+### 16. `TracerPid` Debug Attach State
 
-读取 `/proc/self/status` 中的 `TracerPid`。非 0 表示当前进程被 `ptrace` 附加，可能来自调试器、Frida 或其他动态分析工具。
+Reads `TracerPid` from `/proc/self/status`. A non-zero value means the current process is attached with `ptrace`, which may indicate a debugger, Frida, or another dynamic analysis tool.
 
-### 17. 挂载表模块痕迹
+### 17. Module Traces in Mount Tables
 
-扫描：
+Scans:
 
 - `/proc/self/mountinfo`
 - `/proc/mounts`
 
-查找 `magisk`、`zygisk`、`riru`、`lsposed`、`lspd`、`edxposed`、`xposed`、`shamiko` 等模块挂载痕迹。
+Searches for module traces such as `magisk`, `zygisk`, `riru`, `lsposed`, `lspd`, `edxposed`, `xposed`, and `shamiko`.
 
-### 18. Native 层自检
+### 18. Native Self-Inspection
 
-C++ 层执行独立检查：
+The C++ layer performs independent checks:
 
-- `dl_iterate_phdr` 枚举已加载 so，查找 Frida/Xposed/LSPosed/Riru/Zygisk/Substrate 关键词。
-- `dlsym(RTLD_DEFAULT, ...)` 查找 `frida_agent_main`、`gum_interceptor_attach`、`MSHookFunction`、`xposedCallHandler` 等导出符号。
-- 读取 `/proc/self/maps` 做 native 侧二次 maps 扫描。
-- 读取 `/proc/self/task/*/comm` 做 native 线程名扫描。
-- 读取 `/proc/net/tcp`、`/proc/net/tcp6` 查找 Frida 常见端口。
-- 读取 `/proc/net/unix` 查找注入框架 socket。
-- 读取 `/proc/self/status` 检查 `TracerPid`。
+- Uses `dl_iterate_phdr` to enumerate loaded shared libraries and search for Frida/Xposed/LSPosed/Riru/Zygisk/Substrate keywords.
+- Uses `dlsym(RTLD_DEFAULT, ...)` to search for exported symbols such as `frida_agent_main`, `gum_interceptor_attach`, `MSHookFunction`, and `xposedCallHandler`.
+- Reads `/proc/self/maps` for a second maps scan from the native layer.
+- Reads `/proc/self/task/*/comm` for native-side thread name scanning.
+- Reads `/proc/net/tcp` and `/proc/net/tcp6` for common Frida ports.
+- Reads `/proc/net/unix` for injection-framework sockets.
+- Reads `/proc/self/status` to check `TracerPid`.
 
-Native 层用于补充 Kotlin 层被 Hook、API 被替换或 Java 反射受限时的检测覆盖。
+The native layer complements the Kotlin layer when Java APIs are hooked, replaced, or restricted.
 
-## 风险等级
+## Risk Levels
 
-应用会根据命中项的严重度累计风险分：
+The app accumulates a risk score from matched checks:
 
-- `严重`：进程内类、maps、native so、导出符号等强证据。
-- `高`：端口、进程、线程、文件路径、调试附加等高置信信号。
-- `中`：系统属性、安装包清单、socket、挂载表等环境信号。
-- `低`：可写可执行内存段等辅助信号。
+- `Critical`: strong in-process evidence such as loaded classes, maps entries, native shared libraries, or exported symbols.
+- `High`: high-confidence signals such as ports, processes, threads, file paths, or debug attachment.
+- `Medium`: environmental signals such as system properties, package inventory, sockets, or mount tables.
+- `Low`: auxiliary signals such as writable and executable memory mappings.
 
-## 局限性
+## Limitations
 
-- Frida、LSPosed、Magisk/Zygisk 等工具可以隐藏包名、进程、端口、maps 或 `/proc` 内容，任何单点检测都可能被绕过。
-- Android 版本、ROM、SELinux、应用沙箱和包可见性策略会影响文件、进程、socket、安装包枚举结果。
-- 某些关键词检测可能产生误报，例如第三方安全工具、调试工具或自研模块路径中包含相同关键词。
-- 建议将 EnvScope 的结果作为多信号综合判断，不要只依赖单个检测点。
+- Frida, LSPosed, Magisk/Zygisk, and similar tools can hide package names, processes, ports, maps entries, or `/proc` content. Any single detection point can be bypassed.
+- Android version, ROM behavior, SELinux policy, app sandboxing, and package visibility rules can affect file, process, socket, and package enumeration results.
+- Keyword-based checks may produce false positives, for example when security tools, debugging tools, or internal modules use similar names or paths.
+- EnvScope results should be treated as a multi-signal assessment, not as a decision based on one check.
