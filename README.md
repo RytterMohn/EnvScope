@@ -6,6 +6,8 @@ EnvScope is an Android runtime inspection app for detecting Frida, Xposed, LSPos
 
 The project combines Kotlin-side and native C++ checks. The Kotlin layer inspects packages, class loading, thread stacks, environment variables, system properties, ports, processes, and mount tables. The native layer cross-checks loaded shared libraries, exported symbols, `/proc`, thread names, sockets, and `TracerPid`.
 
+![ae648f468fa9f355c3cc3aabfb1c31c4](assets/ae648f468fa9f355c3cc3aabfb1c31c4.png)
+
 ## Build
 
 This project uses Android Gradle Plugin 8.7.1, Kotlin 1.9.24, and compileSdk 35.

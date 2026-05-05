@@ -6,6 +6,8 @@ EnvScope 是一个用于 Android 运行环境自检的 APK，重点探测 Frida�
 
 项目同时实现 Kotlin 层与 Native C++ 层检测。Kotlin 层负责包名、类加载、调用栈、环境变量、系统属性、端口、进程、挂载表等检查；Native 层负责已加载 so、导出符号、`/proc`、线程名、socket 和 `TracerPid` 的交叉检查。
 
+![ae648f468fa9f355c3cc3aabfb1c31c4](assets/ae648f468fa9f355c3cc3aabfb1c31c4.png)
+
 ## 构建
 
 本项目使用 Android Gradle Plugin 8.7.1、Kotlin 1.9.24、compileSdk 35。
